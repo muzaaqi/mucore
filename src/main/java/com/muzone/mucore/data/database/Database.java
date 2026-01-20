@@ -7,6 +7,9 @@ public interface Database {
     void connect();
     void disconnect();
     Connection getConnection() throws SQLException;
-    void initTables(); // Membuat tabel otomatis jika belum ada
+    void initTables(); 
     void saveViolation(String uuid, String checkName, double vl, String details);
+    
+    // METHOD WAJIB (Agar Command '/mucore status' tidak error)
+    String getType();
 }

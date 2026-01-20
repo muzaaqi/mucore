@@ -8,7 +8,6 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class H2Database implements Database {
 
@@ -21,62 +20,30 @@ public class H2Database implements Database {
 
     @Override
     public void connect() {
-        // Buat folder plugin jika belum ada
-        File dataFolder = new File(plugin.getDataFolder(), "database");
-        if (!dataFolder.exists()) {
-            dataFolder.mkdirs();
+        File dbFile = new File(plugin.getDataFolder(), "database/mucore_data");
+        if (!dbFile.getParentFile().exists()) {
+            dbFile.getParentFile().mkdirs();
         }
 
         HikariConfig config = new HikariConfig();
-        
-        // JDBC URL untuk H2 (File Mode)
-        // Ini akan membuat file 'mucore_data.mv.db' di folder /plugins/MuCore/database/
-        config.setJdbcUrl("jdbc:h2:file:" + dataFolder.getAbsolutePath() + "/mucore_data;MODE=MySQL");
+        config.setJdbcUrl("jdbc:h2:file:" + dbFile.getAbsolutePath() + ";MODE=MySQL");
         config.setDriverClassName("org.h2.Driver");
+        config.setUsername("");
+        config.setPassword("");
         
-        // Optimasi H2
+        // Optimasi Pool
         config.setMaximumPoolSize(10);
-        config.setConnectionTimeout(5000);
-
-        this.dataSource = new HikariDataSource(config);
+        config.setConnectionTimeout(30000); 
         
-        initTables();
+        this.dataSource = new HikariDataSource(config);
         plugin.getLogger().info("Connected to local H2 database.");
     }
 
     @Override
-    public void initTables() {
-        // Syntax H2 mirip dengan MySQL karena kita pakai MODE=MySQL
-        String query = "CREATE TABLE IF NOT EXISTS mucore_violations (" +
-                "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                "uuid VARCHAR(36) NOT NULL, " +
-                "check_name VARCHAR(50), " +
-                "vl DOUBLE, " +
-                "details VARCHAR(255), " +
-                "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
-                ");";
-        
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(query);
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public void disconnect() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
         }
-    }
-
-    @Override
-    public void saveViolation(String uuid, String checkName, double vl, String details) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            String sql = "INSERT INTO mucore_violations (uuid, check_name, vl, details) VALUES (?, ?, ?, ?)";
-            try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, uuid);
-                ps.setString(2, checkName);
-                ps.setDouble(3, vl);
-                ps.setString(4, details);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                plugin.getLogger().warning("Database Error: " + e.getMessage());
-            }
-        });
     }
 
     @Override
@@ -85,7 +52,42 @@ public class H2Database implements Database {
     }
 
     @Override
-    public void disconnect() {
-        if (dataSource != null) dataSource.close();
+    public void initTables() {
+        String sql = "CREATE TABLE IF NOT EXISTS mucore_logs (" +
+                     "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                     "uuid VARCHAR(36), " +
+                     "check_name VARCHAR(32), " +
+                     "vl DOUBLE, " +
+                     "details VARCHAR(255), " +
+                     "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                     ");";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void saveViolation(String uuid, String checkName, double vl, String details) {
+        String sql = "INSERT INTO mucore_logs (uuid, check_name, vl, details) VALUES (?, ?, ?, ?)";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, uuid);
+            ps.setString(2, checkName);
+            ps.setDouble(3, vl);
+            ps.setString(4, details);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String getType() {
+        return "H2 (Local File)";
     }
 }

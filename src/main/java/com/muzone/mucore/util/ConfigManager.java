@@ -18,6 +18,10 @@ public class ConfigManager {
     public FileConfiguration getConfig() {
         return plugin.getConfig();
     }
+
+    public void reload() {
+        plugin.reloadConfig();
+    }
     
     // --- Helper Methods ---
 

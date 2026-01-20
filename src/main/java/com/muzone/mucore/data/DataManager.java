@@ -16,22 +16,20 @@ public class DataManager {
     }
 
     private void initialize() {
-        String type = plugin.getConfigManager().getString("settings.storage-type");
+        // Mengambil setting dari config (lihat langkah 3)
+        String type = plugin.getConfigManager().getString("database.storage-type");
 
-        // Logic Seleksi Otomatis
         if (type != null && type.equalsIgnoreCase("MYSQL")) {
-            // Gunakan MySQL jika diminta secara eksplisit
             plugin.getLogger().info("Database selected: MySQL (Network Mode)");
             this.database = new MySQLDatabase(plugin);
         } else {
-            // DEFAULT ke H2 (Local File)
-            // Ini menangani config "H2" atau jika user salah ketik
             plugin.getLogger().info("Database selected: H2 (Local File Mode)");
             this.database = new H2Database(plugin);
         }
 
         try {
             this.database.connect();
+            this.database.initTables(); // PENTING: Jangan lupa buat tabelnya!
         } catch (Exception e) {
             plugin.getLogger().severe("CRITICAL: Failed to initialize database!");
             e.printStackTrace();

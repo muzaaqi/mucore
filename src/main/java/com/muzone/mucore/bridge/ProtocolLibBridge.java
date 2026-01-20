@@ -8,8 +8,11 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.muzone.mucore.MuCore;
 import com.muzone.mucore.check.Check;
 import com.muzone.mucore.data.PlayerData;
-import org.bukkit.GameMode; // Tambahan
-import org.bukkit.entity.Player; // Tambahan
+import org.bukkit.GameMode;
+import org.bukkit.entity.Player;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class ProtocolLibBridge {
     private final MuCore core;
@@ -19,20 +22,35 @@ public class ProtocolLibBridge {
     }
 
     public void register() {
+        // HAPUS 'FLYING' AGAR TIDAK ADA WARNING
+        List<PacketType> packetsToListen = Arrays.asList(
+            // Movement
+            PacketType.Play.Client.POSITION,
+            PacketType.Play.Client.POSITION_LOOK,
+            PacketType.Play.Client.LOOK,
+            PacketType.Play.Client.ENTITY_ACTION, 
+            
+            // Combat
+            PacketType.Play.Client.USE_ENTITY,
+            PacketType.Play.Client.ARM_ANIMATION,
+            
+            // Interaction/Exploits
+            PacketType.Play.Client.WINDOW_CLICK,
+            PacketType.Play.Client.CUSTOM_PAYLOAD,
+            PacketType.Play.Client.BLOCK_DIG,
+            PacketType.Play.Client.BLOCK_PLACE
+        );
+
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
-                core, ListenerPriority.HIGHEST, PacketType.Play.Client.getInstance().values()) {
+                core, ListenerPriority.HIGHEST, packetsToListen) {
             
             @Override
             public void onPacketReceiving(PacketEvent event) {
                 Player player = event.getPlayer();
                 if (player == null) return;
                 
-                // --- INTEGRASI LUCKPERMS / PERMISSION ---
-                // Jika pemain punya permission bypass, jangan dicek sama sekali.
-                // Admin/Staff tidak akan kena kick.
                 if (player.hasPermission("mucore.bypass")) return;
 
-                // Optimasi: Jangan cek pemain Creative/Spectator
                 if (player.getGameMode() == GameMode.CREATIVE || 
                     player.getGameMode() == GameMode.SPECTATOR) return;
 
@@ -40,8 +58,6 @@ public class ProtocolLibBridge {
                 if (data == null) return;
 
                 for (Check check : core.getCheckManager().getChecks()) {
-                    // Fitur Bypass Per-Check (Opsional)
-                    // Contoh: mucore.bypass.fly
                     if (player.hasPermission("mucore.bypass." + check.getName().toLowerCase())) continue;
 
                     try {
@@ -50,6 +66,27 @@ public class ProtocolLibBridge {
                         e.printStackTrace();
                     }
                 }
+            }
+        });
+        
+        // Listener Server Packet (Velocity) tetap dipisah
+        ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
+                core, ListenerPriority.HIGHEST, PacketType.Play.Server.ENTITY_VELOCITY) {
+            @Override
+            public void onPacketSending(PacketEvent event) {
+                if (event.getPlayer() == null) return;
+                
+                int entityId = event.getPacket().getIntegers().read(0);
+                if (entityId != event.getPlayer().getEntityId()) return;
+
+                PlayerData data = core.getPlayerManager().getData(event.getPlayer());
+                if (data == null) return;
+
+                double x = event.getPacket().getIntegers().read(1) / 8000.0;
+                double y = event.getPacket().getIntegers().read(2) / 8000.0;
+                double z = event.getPacket().getIntegers().read(3) / 8000.0;
+
+                data.setVelocity(x, y, z);
             }
         });
     }

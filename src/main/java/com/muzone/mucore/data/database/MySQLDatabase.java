@@ -1,18 +1,17 @@
 package com.muzone.mucore.data.database;
 
+import com.muzone.mucore.MuCore;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import com.muzone.mucore.MuCore;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class MySQLDatabase implements Database {
 
-    private HikariDataSource dataSource;
     private final MuCore plugin;
+    private HikariDataSource dataSource;
 
     public MySQLDatabase(MuCore plugin) {
         this.plugin = plugin;
@@ -20,62 +19,33 @@ public class MySQLDatabase implements Database {
 
     @Override
     public void connect() {
+        String host = plugin.getConfigManager().getString("database.host");
+        int port = plugin.getConfigManager().getInt("database.port");
+        String database = plugin.getConfigManager().getString("database.name");
+        String username = plugin.getConfigManager().getString("database.user");
+        String password = plugin.getConfigManager().getString("database.password");
+        boolean useSSL = plugin.getConfigManager().getBoolean("database.useSSL");
+
         HikariConfig config = new HikariConfig();
-        
-        // Load settings from config.yml
-        String host = plugin.getConfig().getString("database.host");
-        String port = plugin.getConfig().getString("database.port");
-        String dbName = plugin.getConfig().getString("database.name");
-        
-        config.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + dbName + "?useSSL=false");
-        config.setUsername(plugin.getConfig().getString("database.user"));
-        config.setPassword(plugin.getConfig().getString("database.pass"));
-        
-        // Enterprise Optimization settings
-        config.addDataSourceProperty("cachePrepStmts", "true");
-        config.addDataSourceProperty("prepStmtCacheSize", "250");
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        config.setMaximumPoolSize(10); // Menjaga koneksi tetap efisien
+        config.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=" + useSSL);
+        config.setDriverClassName("com.mysql.cj.jdbc.Driver"); // Driver Modern
+        config.setUsername(username);
+        config.setPassword(password);
+
+        // Optimasi Pool MySQL
+        config.setMaximumPoolSize(10);
+        config.setConnectionTimeout(30000);
+        config.setLeakDetectionThreshold(60000);
 
         this.dataSource = new HikariDataSource(config);
-        initTables();
-        plugin.getLogger().info("Database connected successfully using HikariCP.");
+        plugin.getLogger().info("Connected to remote MySQL database.");
     }
 
     @Override
-    public void initTables() {
-        // Tabel Log Pelanggaran
-        String query = "CREATE TABLE IF NOT EXISTS mucore_violations (" +
-                "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                "uuid VARCHAR(36) NOT NULL, " +
-                "check_name VARCHAR(50), " +
-                "vl DOUBLE, " +
-                "details TEXT, " +
-                "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
-                ");";
-        
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.execute(query);
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public void disconnect() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
         }
-    }
-
-    @Override
-    public void saveViolation(String uuid, String checkName, double vl, String details) {
-        // Dilakukan secara Async agar tidak membekukan server
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            String sql = "INSERT INTO mucore_violations (uuid, check_name, vl, details) VALUES (?, ?, ?, ?)";
-            try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, uuid);
-                ps.setString(2, checkName);
-                ps.setDouble(3, vl);
-                ps.setString(4, details);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                plugin.getLogger().severe("Failed to save violation: " + e.getMessage());
-            }
-        });
     }
 
     @Override
@@ -84,7 +54,43 @@ public class MySQLDatabase implements Database {
     }
 
     @Override
-    public void disconnect() {
-        if (dataSource != null) dataSource.close();
+    public void initTables() {
+        // MySQL Syntax
+        String sql = "CREATE TABLE IF NOT EXISTS mucore_logs (" +
+                     "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                     "uuid VARCHAR(36), " +
+                     "check_name VARCHAR(32), " +
+                     "vl DOUBLE, " +
+                     "details VARCHAR(255), " +
+                     "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                     ");";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void saveViolation(String uuid, String checkName, double vl, String details) {
+        String sql = "INSERT INTO mucore_logs (uuid, check_name, vl, details) VALUES (?, ?, ?, ?)";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, uuid);
+            ps.setString(2, checkName);
+            ps.setDouble(3, vl);
+            ps.setString(4, details);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String getType() {
+        return "MySQL (Network)";
     }
 }

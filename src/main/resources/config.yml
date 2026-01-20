@@ -1,32 +1,38 @@
 # =============================================================
-#                   MUCORE (MUSENTRY) CONFIGURATION
-#              Enterprise Hybrid AntiCheat for MUZONE
+#                  MUCORE (MUSENTRY) CONFIGURATION
+#             Enterprise Hybrid AntiCheat for MUZONE
 # =============================================================
 
+# Pengaturan Umum
 settings:
-  # Prefix pesan di chat
+  # Prefix yang muncul di depan pesan chat/alert
   prefix: "&8[&bMuCore&8] "
-  
+
+# =============================================================
+#                      DATABASE SETTINGS
+# =============================================================
+database:
   # Tipe Penyimpanan Data
   # Options: 
-  # - "H2"    (Disarankan untuk single server - File lokal, tanpa setup)
+  # - "H2"    (Disarankan untuk single server - File lokal, tanpa setup ribet)
   # - "MYSQL" (Disarankan untuk network/bungeecord - Butuh database server)
+  # PENTING: Pastikan penulisan "H2" atau "MYSQL" benar.
   storage-type: "H2"
 
-# Konfigurasi Database (Hanya dipakai jika storage-type: MYSQL)
-database:
+  # Konfigurasi MySQL (Hanya dipakai jika storage-type: MYSQL)
   host: "localhost"
   port: 3306
   name: "mucore_db"
   user: "root"
-  pass: "password"
+  password: "password" # Disamakan dengan kode (sebelumnya 'pass')
+  useSSL: false
   
   # Optimasi Connection Pool (HikariCP)
   pool-size: 10
   connection-timeout: 5000 # 5 detik
 
 # =============================================================
-#                     ACTION & PUNISHMENT SYSTEM
+#                    ACTION & PUNISHMENT SYSTEM
 # =============================================================
 # Sistem ini otomatis menghukum pemain berdasarkan Violation Level (VL).
 # Format: [VL]: "[Command]"
@@ -34,13 +40,16 @@ database:
 # Gunakan "alert [pesan]" untuk mengirim notifikasi ke admin saja.
 
 global_actions:
-  # Peringatan dini ke admin
-  10: "alert &f{player} &7is suspect of &c{check} &7(VL: {vl})"
+  # Peringatan dini ke admin (VL rendah)
+  5: "alert &f{player} &7is suspected of &c{check} &7(VL: {vl})"
+  
+  # Peringatan menengah
+  10: "alert &eWARNING: &f{player} clearly violating &c{check} &7(VL: {vl})"
   
   # Tindakan fisik (Kick)
-  20: "kick {player} &c[MuCore] &fSuspicious activity detected ({check})."
+  20: "kick {player} &c[MuCore] &fUnfair Advantage Detected ({check})."
   
-  # Tindakan keras (Ban) - Uncomment jika ingin auto-ban
+  # Tindakan keras (Ban) - Uncomment baris di bawah jika ingin auto-ban
   # 50: "ban {player} &cUnfair Advantage Detected."
 
 # =============================================================
@@ -54,22 +63,22 @@ checks:
   # -----------------------------------------------------------
   packet_limiter:
     enabled: true
-    cancel_threshold_vl: 5 # Kick pemain jika melanggar limit 5 kali
+    cancel_threshold_vl: 5 # Kick pemain jika melanggar limit 5 kali berturut-turut
     
-    # Batas total paket per detik
+    # Batas total paket per detik (Global)
     global_limit:
       java: 300
-      bedrock: 450 # Bedrock mengirim paket lebih banyak
+      bedrock: 450 # Bedrock mengirim paket lebih banyak (Geyser overhead)
       
-    # Batas spesifik per jenis paket (Anti-Crasher)
+    # Batas spesifik per jenis paket (Anti-Crasher Spesifik)
     specific_limits:
       WINDOW_CLICK: # Mencegah AutoClicker Inventory / Crasher
         java: 30
         bedrock: 40
-      CUSTOM_PAYLOAD: # Mencegah Book Ban / Bad Packets
+      CUSTOM_PAYLOAD: # Mencegah Book Ban / Bad Packets / Command Spam
         java: 10
         bedrock: 15
-      FLYING: # Mencegah Timer / Speed Spam
+      FLYING: # Mencegah Timer / Speed Spam / Blink
         java: 80
         bedrock: 100
 
@@ -78,7 +87,7 @@ checks:
   # -----------------------------------------------------------
   Fly:
     enabled: true
-    # Actions Khusus (Override Global)
+    # Actions Khusus (Override Global Actions)
     actions:
       15: "kick {player} &cFlying is not enabled on this server."
 
@@ -97,7 +106,7 @@ checks:
   KillAura:
     enabled: true
     actions:
-      # KillAura sangat berbahaya, kita set alert lebih awal
+      # KillAura sangat berbahaya, kita set alert lebih agresif
       5: "alert &cURGENT: &f{player} might be using &4KillAura &7(VL: {vl})"
       15: "kick {player} &cCombat Hacks Detected."
 
@@ -116,9 +125,9 @@ webhook:
   url: "https://discord.com/api/webhooks/YOUR_WEBHOOK_URL_HERE"
   
   # Nama bot yang muncul di Discord
-  username: "MuCore"
+  username: "MuCore Sentry"
   
   # Kirim webhook setiap berapa VL?
-  # 1 = Setiap kali fail (SPAM, Hati-hati rate limit!)
-  # 5 = Setiap kelipatan 5 (Disarankan)
+  # 1 = Setiap kali fail (SPAM, Hati-hati rate limit discord!)
+  # 5 = Setiap kelipatan 5 (Disarankan: 5, 10, 15...)
   alert_frequency: 5

@@ -1,7 +1,5 @@
 package com.muzone.mucore.data;
 
-import com.muzone.mucore.data.PacketTracker;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import java.util.UUID;
 
@@ -14,18 +12,23 @@ public class PlayerData {
     private float lastYaw;
     private double lastDeltaXZ;
     
-    // Safety
+    // Safety & Setback
     private double lastSafeY;
     
     // Status
     private boolean alertsEnabled = true;
     private double violationLevel = 0.0;
-    private boolean isBedrock = false; // Akan di-set oleh GeyserBridge
+    private boolean isBedrock = false;
 
     // Combat
     private long lastAttackTime;
     private int attackCount;
     private long lastCpsReset;
+
+    // --- VELOCITY TRACKING (Ini yang kurang tadi) ---
+    private double velocityX, velocityY, velocityZ;
+    private int velocityTicks; 
+    private boolean waitingForVelocity;
 
     public PlayerData(Player player) {
         this.uuid = player.getUniqueId();
@@ -41,7 +44,6 @@ public class PlayerData {
         this.lastY = y;
         this.lastZ = z;
         this.lastYaw = yaw;
-        // Update SafeY jika di tanah (bisa dikembangkan nanti)
     }
 
     public void addViolation(double amount) {
@@ -62,8 +64,8 @@ public class PlayerData {
     public void setLastDeltaXZ(double delta) { this.lastDeltaXZ = delta; }
     
     public double getLastSafeY() { return lastSafeY; }
-    public void setLastSafeY(double y) { this.lastSafeY = y; } // Tambahkan Setter ini!
-    public void setLastY(double y) { this.lastY = y; } // Tambahkan Setter ini!
+    public void setLastSafeY(double y) { this.lastSafeY = y; }
+    public void setLastY(double y) { this.lastY = y; }
 
     public boolean isAlertsEnabled() { return alertsEnabled; }
     public void setAlertsEnabled(boolean enabled) { this.alertsEnabled = enabled; }
@@ -82,4 +84,26 @@ public class PlayerData {
     
     public long getLastCpsReset() { return lastCpsReset; }
     public void setLastCpsReset(long time) { this.lastCpsReset = time; }
+
+    // --- VELOCITY METHODS (PENTING) ---
+    public double getVelocityX() { return velocityX; }
+    public double getVelocityY() { return velocityY; }
+    public double getVelocityZ() { return velocityZ; }
+    public int getVelocityTicks() { return velocityTicks; }
+    
+    public void setVelocity(double x, double y, double z) {
+        this.velocityX = x;
+        this.velocityY = y;
+        this.velocityZ = z;
+        // Estimasi durasi knockback (X+Y+Z dibagi rata + 20 ticks toleransi)
+        this.velocityTicks = (int) (((Math.abs(x) + Math.abs(y) + Math.abs(z)) / 2) + 20);
+        this.waitingForVelocity = true;
+    }
+    
+    public void decrementVelocityTicks() {
+        if (velocityTicks > 0) velocityTicks--;
+    }
+    
+    public boolean isWaitingForVelocity() { return waitingForVelocity; }
+    public void setWaitingForVelocity(boolean wait) { this.waitingForVelocity = wait; }
 }
