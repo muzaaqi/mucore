@@ -25,6 +25,13 @@ public class MuCore extends JavaPlugin {
         
         // 3. Register Bridges (ProtocolLib, Geyser)
         new ProtocolLibBridge(this).register();
+
+        // 4. Register Commands
+        getCommand("mucore").setExecutor(new MuCommand(this));
+    
+        // 5. Register Checks Baru
+        checkManager.register(new SpeedCheck());
+        checkManager.register(new OmniSprintCheck());
         
         getLogger().info("MUCORE AntiCheat has been enabled successfully!");
     }
