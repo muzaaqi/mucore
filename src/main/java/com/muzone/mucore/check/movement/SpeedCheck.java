@@ -6,7 +6,6 @@ import com.muzone.mucore.check.Check;
 import com.muzone.mucore.data.PlayerData;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 public class SpeedCheck extends Check {
@@ -27,10 +26,10 @@ public class SpeedCheck extends Check {
         // 2. Hitung Delta XZ (Jarak Horizontal)
         double deltaX = x - data.getLastX();
         double deltaZ = z - data.getLastZ();
-        double deltaXZ = Math.hypot(deltaX, deltaZ); // Rumus Pitagoras
+        double deltaXZ = Math.hypot(deltaX, deltaZ); 
 
         // 3. Kalkulasi Limit Kecepatan (Prediction Engine)
-        double limit = 0.34; // Base sprint speed vanilla + toleransi kecil
+        double limit = 0.34; // Base sprint speed
 
         // Tambahan toleransi jika kena efek Speed
         if (player.hasPotionEffect(PotionEffectType.SPEED)) {
@@ -40,31 +39,33 @@ public class SpeedCheck extends Check {
 
         // Tambahan jika melompat (Ice/Air friction)
         if (!event.getPacket().getBooleans().read(0)) { // If isAir
-            limit += 0.3; // Momentum lompat
+            limit += 0.3; 
         }
 
         // HYBRID: Bedrock Handling
         if (data.isBedrock()) {
-            limit += 0.15; // Geyser movement sering "bursty" atau tidak stabil
+            limit += 0.15; 
         }
 
         // 4. Bandingkan Realita vs Limit
-        // Kita juga cek apakah deltaXZ konsisten tinggi (bukan lag spike sesaat)
         if (deltaXZ > limit && data.getLastDeltaXZ() > limit) {
             
-            // Output detail untuk debug admin
+            // Siapkan pesan detail untuk log
             String detail = String.format("Speed: %.2f (Limit: %.2f)", deltaXZ, limit);
             
-            data.addViolation(1.0);
-            MuCore.getInstance().getDatabase().saveViolation(player.getUniqueId().toString(), "Speed", data.getVL(), detail);
+            // --- REFACTOR: Panggil method fail() ---
+            // Method ini otomatis:
+            // 1. Tambah Violation Level (VL)
+            // 2. Simpan ke Database
+            // 3. Cek ActionManager (Kick/Ban/Alert otomatis)
+            fail(player, data, detail);
             
-            // Alert Admin
-            // (Nanti akan ditangani oleh sistem Alert)
-            
-            // Setback (Tarik mundur pemain)
-            if (data.getVL() > 15) {
+            // --- Setback Logic (Pencegahan Fisik) ---
+            // Kita tetap butuh setback manual di sini agar cheater tidak bisa maju
+            if (data.getVL() > 5) { // VL 5 cukup untuk mulai teleport balik (Rubberband)
                 event.setCancelled(true);
-                // Teleport dilakukan via Scheduler utama agar thread safe
+                
+                // Teleport harus di Main Thread
                 MuCore.getInstance().getServer().getScheduler().runTask(MuCore.getInstance(), () -> {
                     player.teleport(player.getLocation()); 
                 });

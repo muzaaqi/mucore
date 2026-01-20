@@ -1,3 +1,10 @@
+# Action System
+# Format: [Violation Level]: "[Command]"
+# Gunakan {player} untuk nama pemain.
+global_actions:
+  20: "kick {player} &cSuspicious activity detected (Global)."
+  50: "ban {player} &cUnfair Advantage (Autoban)"
+
 checks:
   packet_limiter:
     enabled: true
@@ -22,3 +29,15 @@ checks:
       FLYING: 
         java: 80
         bedrock: 100
+  KillAura:
+    enabled: true
+    # Actions spesifik untuk KillAura (Override global)
+    actions:
+      10: "alert &8[&bMuCore&8] &f{player} &7suspected of &cKillAura &7(VL: {vl})"
+      15: "kick {player} &cKillAura detected."
+      
+  Fly:
+    enabled: true
+    actions:
+      10: "alert &8[&bMuCore&8] &f{player} &7suspected of &cFly &7(VL: {vl})"
+      20: "kick {player} &cFlying is not allowed."

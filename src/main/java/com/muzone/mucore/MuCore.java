@@ -18,6 +18,7 @@ public class MuCore extends JavaPlugin {
         
         // 1. Load Configurations
         this.configManager = new ConfigManager(this);
+        this.actionManager = new ActionManager(this);
         
         // 2. Initialize Data & Managers
         this.playerManager = new PlayerManager();
@@ -47,5 +48,6 @@ public class MuCore extends JavaPlugin {
 
     public static MuCore getInstance() { return instance; }
     public ConfigManager getConfigManager() { return configManager; }
+    public ActionManager getActionManager() { return actionManager; }
     public PlayerManager getPlayerManager() { return playerManager; }
 }
