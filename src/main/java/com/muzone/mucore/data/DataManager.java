@@ -2,6 +2,7 @@ package com.muzone.mucore.data;
 
 import com.muzone.mucore.MuCore;
 import com.muzone.mucore.data.database.Database;
+import com.muzone.mucore.data.database.H2Database;
 import com.muzone.mucore.data.database.MySQLDatabase;
 
 public class DataManager {
@@ -15,24 +16,24 @@ public class DataManager {
     }
 
     private void initialize() {
-        // Cek tipe database dari config.yml
         String type = plugin.getConfigManager().getString("settings.storage-type");
 
-        // Logic pemilihan Database
+        // Logic Seleksi Otomatis
         if (type != null && type.equalsIgnoreCase("MYSQL")) {
+            // Gunakan MySQL jika diminta secara eksplisit
+            plugin.getLogger().info("Database selected: MySQL (Network Mode)");
             this.database = new MySQLDatabase(plugin);
         } else {
-            // Default ke MySQL untuk saat ini (atau H2 jika Anda nanti membuatnya)
-            // Untuk Enterprise, biasanya fallback ke SQLite/H2 local file
-            plugin.getLogger().info("Using Database: MySQL (Default)");
-            this.database = new MySQLDatabase(plugin);
+            // DEFAULT ke H2 (Local File)
+            // Ini menangani config "H2" atau jika user salah ketik
+            plugin.getLogger().info("Database selected: H2 (Local File Mode)");
+            this.database = new H2Database(plugin);
         }
 
-        // Lakukan koneksi
         try {
             this.database.connect();
         } catch (Exception e) {
-            plugin.getLogger().severe("Failed to connect to database! Plugin functionality will be limited.");
+            plugin.getLogger().severe("CRITICAL: Failed to initialize database!");
             e.printStackTrace();
         }
     }

@@ -1,43 +1,107 @@
-# Action System
-# Format: [Violation Level]: "[Command]"
-# Gunakan {player} untuk nama pemain.
+# =============================================================
+#                   MUCORE (MUSENTRY) CONFIGURATION
+#              Enterprise Hybrid AntiCheat for MUZONE
+# =============================================================
+
+settings:
+  # Prefix pesan di chat
+  prefix: "&8[&bMuCore&8] "
+  
+  # Tipe Penyimpanan Data
+  # Options: 
+  # - "H2"    (Disarankan untuk single server - File lokal, tanpa setup)
+  # - "MYSQL" (Disarankan untuk network/bungeecord - Butuh database server)
+  storage-type: "H2"
+
+# Konfigurasi Database (Hanya dipakai jika storage-type: MYSQL)
+database:
+  host: "localhost"
+  port: 3306
+  name: "mucore_db"
+  user: "root"
+  pass: "password"
+  
+  # Optimasi Connection Pool (HikariCP)
+  pool-size: 10
+  connection-timeout: 5000 # 5 detik
+
+# =============================================================
+#                     ACTION & PUNISHMENT SYSTEM
+# =============================================================
+# Sistem ini otomatis menghukum pemain berdasarkan Violation Level (VL).
+# Format: [VL]: "[Command]"
+# Placeholder: {player}, {vl}, {check}
+# Gunakan "alert [pesan]" untuk mengirim notifikasi ke admin saja.
+
 global_actions:
-  20: "kick {player} &cSuspicious activity detected (Global)."
-  50: "ban {player} &cUnfair Advantage (Autoban)"
+  # Peringatan dini ke admin
+  10: "alert &f{player} &7is suspect of &c{check} &7(VL: {vl})"
+  
+  # Tindakan fisik (Kick)
+  20: "kick {player} &c[MuCore] &fSuspicious activity detected ({check})."
+  
+  # Tindakan keras (Ban) - Uncomment jika ingin auto-ban
+  # 50: "ban {player} &cUnfair Advantage Detected."
+
+# =============================================================
+#                       CHECKS CONFIGURATION
+# =============================================================
 
 checks:
+  # -----------------------------------------------------------
+  # Anti-Crash & Exploit (Packet Limiter)
+  # Melindungi server dari serangan "Lag Machine" atau "Crasher".
+  # -----------------------------------------------------------
   packet_limiter:
     enabled: true
-    cancel_threshold_vl: 5 # Berapa kali spam sebelum kick
+    cancel_threshold_vl: 5 # Kick pemain jika melanggar limit 5 kali
     
-    # Global Packet Limit (Per Detik)
+    # Batas total paket per detik
     global_limit:
       java: 300
-      bedrock: 450 # Bedrock/Geyser butuh limit lebih tinggi
-    
-    # Limit Spesifik per Tipe Paket (Crucial for Crashers)
+      bedrock: 450 # Bedrock mengirim paket lebih banyak
+      
+    # Batas spesifik per jenis paket (Anti-Crasher)
     specific_limits:
-      # Mencegah AutoClicker/Inventory Crashers
-      WINDOW_CLICK: 
+      WINDOW_CLICK: # Mencegah AutoClicker Inventory / Crasher
         java: 30
         bedrock: 40
-      # Mencegah Book Ban / Custom Payload Exploit
-      CUSTOM_PAYLOAD: 
+      CUSTOM_PAYLOAD: # Mencegah Book Ban / Bad Packets
         java: 10
         bedrock: 15
-      # Mencegah Timer/Speed Hack spam
-      FLYING: 
+      FLYING: # Mencegah Timer / Speed Spam
         java: 80
         bedrock: 100
-  KillAura:
-    enabled: true
-    # Actions spesifik untuk KillAura (Override global)
-    actions:
-      10: "alert &8[&bMuCore&8] &f{player} &7suspected of &cKillAura &7(VL: {vl})"
-      15: "kick {player} &cKillAura detected."
-      
+
+  # -----------------------------------------------------------
+  # Movement Checks (Fly, Speed, OmniSprint)
+  # -----------------------------------------------------------
   Fly:
     enabled: true
+    # Actions Khusus (Override Global)
     actions:
-      10: "alert &8[&bMuCore&8] &f{player} &7suspected of &cFly &7(VL: {vl})"
-      20: "kick {player} &cFlying is not allowed."
+      15: "kick {player} &cFlying is not enabled on this server."
+
+  Speed:
+    enabled: true
+    actions:
+      20: "kick {player} &cMoving too fast (Speed/Timer)."
+
+  OmniSprint:
+    enabled: true
+    # Bedrock otomatis di-bypass untuk check ini di kode Java
+
+  # -----------------------------------------------------------
+  # Combat Checks (KillAura, Reach)
+  # -----------------------------------------------------------
+  KillAura:
+    enabled: true
+    actions:
+      # KillAura sangat berbahaya, kita set alert lebih awal
+      5: "alert &cURGENT: &f{player} might be using &4KillAura &7(VL: {vl})"
+      15: "kick {player} &cCombat Hacks Detected."
+
+  Reach:
+    enabled: true
+    actions:
+      10: "alert &f{player} hit from suspicious distance &7(VL: {vl})"
