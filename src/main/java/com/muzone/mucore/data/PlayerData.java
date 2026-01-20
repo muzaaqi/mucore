@@ -9,6 +9,11 @@ public class PlayerData {
     private double lastX, lastY, lastZ;
     private float lastYaw;
 
+    // Combat variables
+    private long lastAttackTime;
+    private int attackCount; // Untuk menghitung CPS
+    private long lastCpsReset; // Waktu reset hitungan CPS
+
     // ... constructor ...
 
     // Method untuk update posisi setiap kali paket diterima
@@ -25,6 +30,16 @@ public class PlayerData {
     public void setLastDeltaXZ(double delta) { this.lastDeltaXZ = delta; }
     public boolean isAlertsEnabled() { return alertsEnabled; }
     public void setAlertsEnabled(boolean enabled) { this.alertsEnabled = enabled; }
+
+    public long getLastAttackTime() { return lastAttackTime; }
+    public void setLastAttackTime(long time) { this.lastAttackTime = time; }
+    
+    public int getAttackCount() { return attackCount; }
+    public void incrementAttackCount() { this.attackCount++; }
+    public void resetAttackCount() { this.attackCount = 0; }
+    
+    public long getLastCpsReset() { return lastCpsReset; }
+    public void setLastCpsReset(long time) { this.lastCpsReset = time; }
     
     // ... getter lainnya ...
 }

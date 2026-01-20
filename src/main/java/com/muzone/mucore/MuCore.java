@@ -30,8 +30,11 @@ public class MuCore extends JavaPlugin {
         getCommand("mucore").setExecutor(new MuCommand(this));
     
         // 5. Register Checks Baru
+        checkManager.register(new PacketLimiterCheck()); // Pastikan ini juga didaftarkan!
+        checkManager.register(new FlyCheck());
         checkManager.register(new SpeedCheck());
         checkManager.register(new OmniSprintCheck());
+        checkManager.register(new KillAuraCheck());
         
         getLogger().info("MUCORE AntiCheat has been enabled successfully!");
     }

@@ -6,21 +6,18 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
 import com.muzone.mucore.MuCore;
-import com.muzone.mucore.check.packet.PacketLimiterCheck;
+import com.muzone.mucore.check.Check;
 import com.muzone.mucore.data.PlayerData;
 
 public class ProtocolLibBridge {
     private final MuCore plugin;
-    private final PacketLimiterCheck packetLimiter;
 
     public ProtocolLibBridge(MuCore plugin) {
         this.plugin = plugin;
-        this.packetLimiter = new PacketLimiterCheck();
     }
 
     public void register() {
-        // Kita mendengarkan SEMUA paket dari client
-        // Priority HIGHEST berarti kita memproses paling awal sebelum plugin lain
+        // Mendengarkan SEMUA paket dari client
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(
                 plugin, ListenerPriority.HIGHEST, PacketType.Play.Client.getInstance().values()) {
             
@@ -28,11 +25,21 @@ public class ProtocolLibBridge {
             public void onPacketReceiving(PacketEvent event) {
                 if (event.getPlayer() == null) return;
                 
+                // Ambil data pemain (Cache)
                 PlayerData data = plugin.getPlayerManager().getData(event.getPlayer());
                 if (data == null) return;
 
-                // Jalankan Packet Limiter
-                packetLimiter.handle(event.getPlayer(), data, event);
+                // Loop semua module check yang terdaftar
+                // Sistem ini membuat penambahan fitur baru sangat mudah
+                for (Check check : plugin.getCheckManager().getChecks()) {
+                    try {
+                        check.handle(event.getPlayer(), data, event);
+                    } catch (Exception e) {
+                        // Mencegah satu error di modul merusak modul lain
+                        plugin.getLogger().warning("Error in check " + check.getName() + ": " + e.getMessage());
+                        e.printStackTrace(); 
+                    }
+                }
             }
         });
     }
