@@ -105,3 +105,20 @@ checks:
     enabled: true
     actions:
       10: "alert &f{player} hit from suspicious distance &7(VL: {vl})"
+
+# =============================================================
+#                       WEBHOOK SYSTEM
+# =============================================================
+webhook:
+  enabled: true
+  # URL Webhook Discord atau Endpoint Website Anda
+  # Tutorial: Buat channel discord -> Edit Channel -> Integrations -> Webhooks
+  url: "https://discord.com/api/webhooks/YOUR_WEBHOOK_URL_HERE"
+  
+  # Nama bot yang muncul di Discord
+  username: "MuCore"
+  
+  # Kirim webhook setiap berapa VL?
+  # 1 = Setiap kali fail (SPAM, Hati-hati rate limit!)
+  # 5 = Setiap kelipatan 5 (Disarankan)
+  alert_frequency: 5

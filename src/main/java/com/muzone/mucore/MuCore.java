@@ -14,6 +14,7 @@ import com.muzone.mucore.data.ActionManager;
 import com.muzone.mucore.data.DataManager;
 import com.muzone.mucore.data.PlayerManager;
 import com.muzone.mucore.data.database.Database;
+import com.muzone.mucore.data.WebhookManager;
 import com.muzone.mucore.util.ConfigManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -26,6 +27,7 @@ public class MuCore extends JavaPlugin {
     private PlayerManager playerManager;  // Player Data Cache
     private ActionManager actionManager;  // Punishment System
     private CheckManager checkManager;    // Module Registry
+    private WebhookManager webhookManager; // Discord Webhook Manager
 
     @Override
     public void onEnable() {
@@ -36,6 +38,7 @@ public class MuCore extends JavaPlugin {
 
         // 2. Initialize Database (PENTING: Sebelum manager lain)
         this.dataManager = new DataManager(this);
+        this.webhookManager = new WebhookManager(this);
 
         // 3. Initialize Logic Managers
         this.playerManager = new PlayerManager();
@@ -82,7 +85,7 @@ public class MuCore extends JavaPlugin {
     public PlayerManager getPlayerManager() { return playerManager; }
     public ActionManager getActionManager() { return actionManager; }
     public CheckManager getCheckManager() { return checkManager; }
-
+    public WebhookManager getWebhookManager() { return webhookManager; }
     // Helper method untuk mempermudah akses database dari Check.java
     public Database getDatabase() {
         if (dataManager == null) return null;

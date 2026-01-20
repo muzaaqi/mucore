@@ -34,5 +34,8 @@ public abstract class Check {
         }
         
         MuCore.getInstance().getActionManager().evaluate(player, this.name, data.getVL());
+
+        // Method ini sudah Async di dalamnya, jadi aman dipanggil di sini.
+        MuCore.getInstance().getWebhookManager().sendViolation(player, this.name, data.getVL(), details);
     }
 }
