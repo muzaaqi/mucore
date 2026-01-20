@@ -8,9 +8,10 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.muzone.mucore.MuCore;
 import com.muzone.mucore.check.Check;
 import com.muzone.mucore.data.PlayerData;
+import org.bukkit.GameMode; // Tambahan
+import org.bukkit.entity.Player; // Tambahan
 
 public class ProtocolLibBridge {
-    // KITA GANTI NAMA VARIABEL JADI 'core' AGAR TIDAK BENTROK
     private final MuCore core;
 
     public ProtocolLibBridge(MuCore core) {
@@ -23,18 +24,28 @@ public class ProtocolLibBridge {
             
             @Override
             public void onPacketReceiving(PacketEvent event) {
-                if (event.getPlayer() == null) return;
+                Player player = event.getPlayer();
+                if (player == null) return;
                 
-                // Gunakan 'core' di sini, bukan 'plugin'
-                // Karena 'plugin' di dalam sini dianggap sebagai Generic Plugin bawaan ProtocolLib
-                PlayerData data = core.getPlayerManager().getData(event.getPlayer());
-                
+                // --- INTEGRASI LUCKPERMS / PERMISSION ---
+                // Jika pemain punya permission bypass, jangan dicek sama sekali.
+                // Admin/Staff tidak akan kena kick.
+                if (player.hasPermission("mucore.bypass")) return;
+
+                // Optimasi: Jangan cek pemain Creative/Spectator
+                if (player.getGameMode() == GameMode.CREATIVE || 
+                    player.getGameMode() == GameMode.SPECTATOR) return;
+
+                PlayerData data = core.getPlayerManager().getData(player);
                 if (data == null) return;
 
-                // Gunakan 'core' lagi di sini
                 for (Check check : core.getCheckManager().getChecks()) {
+                    // Fitur Bypass Per-Check (Opsional)
+                    // Contoh: mucore.bypass.fly
+                    if (player.hasPermission("mucore.bypass." + check.getName().toLowerCase())) continue;
+
                     try {
-                        check.handle(event.getPlayer(), data, event);
+                        check.handle(player, data, event);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
