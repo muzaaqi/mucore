@@ -1,4 +1,3 @@
-````markdown
 <div align="center">
 
   <img src="logo.png" alt="MuCore Logo" width="150" height="150">
@@ -120,7 +119,6 @@ checks:
     global_limit:
       java: 300
       bedrock: 450 # Adjusted for Geyser overhead
-```
 ````
 
 ---
@@ -158,5 +156,3 @@ The compiled jar will be in the `target/` directory:
 <div align="center">
     <small>Developed by Muzone Team • &copy; 2026</small>
 </div>
-
-```
