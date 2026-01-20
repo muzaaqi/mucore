@@ -1,24 +1,30 @@
-package com.muzone.mucore.data;
-
-import com.muzone.mucore.bridge.GeyserBridge;
-import org.bukkit.entity.Player;
-import java.util.UUID;
-
 public class PlayerData {
-    private final UUID uuid;
-    private final boolean isBedrock;
-    private double violationLevel = 0;
-    
-    // Movement cache
-    private double lastPosX, lastPosY, lastPosZ;
-    
-    public PlayerData(Player player) {
-        this.uuid = player.getUniqueId();
-        this.isBedrock = GeyserBridge.isBedrock(uuid);
-    }
+    // ... variable yang sudah ada sebelumnya ...
 
-    public void addViolation(double amount) { this.violationLevel += amount; }
-    public boolean isBedrock() { return isBedrock; }
-    public double getVL() { return violationLevel; }
-    // Getter & Setter lainnya...
+    private double lastDeltaXZ; // Kecepatan horizontal terakhir
+    private long lastFlyingPacket; // Timestamp paket terakhir (untuk timer check)
+    private boolean alertsEnabled = true; // Untuk command manager nanti
+
+    // Cache posisi (X, Y, Z, Yaw)
+    private double lastX, lastY, lastZ;
+    private float lastYaw;
+
+    // ... constructor ...
+
+    // Method untuk update posisi setiap kali paket diterima
+    public void updateLocation(double x, double y, double z, float yaw) {
+        this.lastX = x;
+        this.lastY = y;
+        this.lastZ = z;
+        this.lastYaw = yaw;
+        this.lastFlyingPacket = System.currentTimeMillis();
+    }
+    
+    // Getter & Setter
+    public double getLastDeltaXZ() { return lastDeltaXZ; }
+    public void setLastDeltaXZ(double delta) { this.lastDeltaXZ = delta; }
+    public boolean isAlertsEnabled() { return alertsEnabled; }
+    public void setAlertsEnabled(boolean enabled) { this.alertsEnabled = enabled; }
+    
+    // ... getter lainnya ...
 }
