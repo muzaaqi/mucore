@@ -1,0 +1,14 @@
+name: MuCore
+version: 1.0-SNAPSHOT
+main: com.muzone.mucore.MuCore
+api-version: 1.20
+authors: [MUZONE]
+description: Enterprise Hybrid AntiCheat System
+depend: [ProtocolLib]
+softdepend: [floodgate, Geyser-Spigot]
+
+commands:
+  mucore:
+    description: Main command for MuCore AntiCheat
+    usage: /mucore <args>
+    permission: mucore.admin
