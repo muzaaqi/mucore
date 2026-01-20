@@ -1,0 +1,24 @@
+checks:
+  packet_limiter:
+    enabled: true
+    cancel_threshold_vl: 5 # Berapa kali spam sebelum kick
+    
+    # Global Packet Limit (Per Detik)
+    global_limit:
+      java: 300
+      bedrock: 450 # Bedrock/Geyser butuh limit lebih tinggi
+    
+    # Limit Spesifik per Tipe Paket (Crucial for Crashers)
+    specific_limits:
+      # Mencegah AutoClicker/Inventory Crashers
+      WINDOW_CLICK: 
+        java: 30
+        bedrock: 40
+      # Mencegah Book Ban / Custom Payload Exploit
+      CUSTOM_PAYLOAD: 
+        java: 10
+        bedrock: 15
+      # Mencegah Timer/Speed Hack spam
+      FLYING: 
+        java: 80
+        bedrock: 100
