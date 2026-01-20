@@ -35,6 +35,7 @@ public class MuCore extends JavaPlugin {
         checkManager.register(new SpeedCheck());
         checkManager.register(new OmniSprintCheck());
         checkManager.register(new KillAuraCheck());
+        checkManager.register(new ReachCheck());
         
         getLogger().info("MUCORE AntiCheat has been enabled successfully!");
     }
